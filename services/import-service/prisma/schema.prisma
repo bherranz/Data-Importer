@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ImportStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+/// One row per uploaded CSV file. Tracks ingestion progress, row-level
+/// validation outcomes, and the post-import aggregation summary.
+model Import {
+  id            String       @id @default(uuid())
+  filename      String
+  checksum      String       @unique
+  status        ImportStatus @default(PROCESSING)
+  totalRows     Int          @default(0)
+  validRows     Int          @default(0)
+  duplicateRows Int          @default(0)
+  invalidRows   Int          @default(0)
+  errorSummary  Json?
+  aggregates    Json?
+  startedAt     DateTime     @default(now())
+  finishedAt    DateTime?
+
+  records EmissionRecord[]
+
+  @@map("imports")
+}
+
+/// A single (country, sector, year) emissions data point, pivoted from the
+/// source CSV's wide year-per-column layout into a queryable long format.
+model EmissionRecord {
+  id           String   @id @default(uuid())
+  country      String
+  sector       String
+  parentSector String?
+  year         Int
+  value        Float
+  createdAt    DateTime @default(now())
+
+  importId String
+  import   Import @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([importId, country, sector, year])
+  @@index([country])
+  @@index([sector])
+  @@index([year])
+  @@index([country, year])
+  @@map("emission_records")
+}

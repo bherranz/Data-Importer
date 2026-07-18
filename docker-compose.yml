@@ -17,5 +17,33 @@ services:
       timeout: 5s
       retries: 10
 
+  # One-shot: applies Prisma migrations, then exits. Both services wait on
+  # this rather than migrating themselves, since import-service is the
+  # single owner of the schema (see docs/architecture.md).
+  migrate:
+    build: ./services/import-service
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    command: ["npx", "prisma", "migrate", "deploy"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  import-service:
+    build: ./services/import-service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${IMPORT_SERVICE_PORT}
+    ports:
+      - "${IMPORT_SERVICE_PORT}:${IMPORT_SERVICE_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   db-data:
