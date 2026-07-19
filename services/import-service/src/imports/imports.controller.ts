@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ImportsService } from './imports.service';
 import { ImportSummaryDto } from './dto/import-summary.dto';
@@ -12,6 +12,14 @@ export class ImportsController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   @ApiOperation({
     summary: 'Upload and ingest a CSV file of emissions data',
     description:
