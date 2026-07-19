@@ -45,5 +45,21 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  query-service:
+    build: ./services/query-service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${QUERY_SERVICE_PORT}
+      RATE_LIMIT: ${QUERY_RATE_LIMIT}
+    ports:
+      - "${QUERY_SERVICE_PORT}:${QUERY_SERVICE_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   db-data:
