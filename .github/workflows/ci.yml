@@ -60,3 +60,59 @@ jobs:
 
       - name: E2E tests
         run: npm run test:e2e
+
+  query-service:
+    name: query-service (lint, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/query-service
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: importer
+          POSTGRES_PASSWORD: importer
+          POSTGRES_DB: emissions_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U importer -d emissions_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://importer:importer@localhost:5432/emissions_test?schema=public
+      PSQL_DATABASE_URL: postgresql://importer:importer@localhost:5432/emissions_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: services/query-service/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check app tests
+
+      - name: Format check (black)
+        run: black --check app tests
+
+      # No Node/Prisma toolchain here: apply the same migration SQL that
+      # import-service's Prisma migration generates, so this job stays
+      # Python-only. import-service's CI job is what actually verifies
+      # `prisma migrate deploy` works.
+      - name: Apply schema
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          psql "$PSQL_DATABASE_URL" -f ../import-service/prisma/migrations/20260718120000_init/migration.sql
+
+      - name: Tests
+        run: pytest -v
