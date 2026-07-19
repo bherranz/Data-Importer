@@ -43,12 +43,12 @@ Status codes:
 | Code | Meaning |
 |---|---|
 | 201 | New import completed |
-| 200 | This exact file (by SHA-256) was already imported — returns the original summary, `duplicateOfExistingImport: true`, nothing re-ingested |
+| 200 | This exact file (by SHA-256) was already imported, returns the original summary, `duplicateOfExistingImport: true`, nothing re-ingested |
 | 400 | File missing/empty, not a `.csv`, or fails to parse (missing/unexpected columns) |
 | 409 | This exact file is currently being imported by a concurrent request |
 
 Row-level problems (a handful of bad rows in an otherwise-valid file) do **not** fail the
-request — they're reported in `errorSummary`/`invalidRows`/`duplicateRows` instead. See
+request, they're reported in `errorSummary`/`invalidRows`/`duplicateRows` instead. See
 [architecture.md](architecture.md#the-dataset-has-real-messiness-and-we-chose-not-to-hide-it)
 for why.
 
@@ -108,10 +108,10 @@ curl "http://localhost:8000/emissions?country=ESP&sort_by=year&order=desc&page=1
 
 Filterable/sortable fields: `country`, `sector`, `parentSector`, `year`, `value` (plus `id`,
 `createdAt` for sorting only). Filtering or sorting on anything else, or an unknown operator
-suffix, is a `400` with a message naming the bad field/operator — never a silently-ignored
+suffix, is a `400` with a message naming the bad field/operator, never a silently-ignored
 param and never a raw SQL/500 error.
 
-Rate limited (default 60 requests/minute/IP, configurable via `RATE_LIMIT`) — exceeding it
+Rate limited (default 60 requests/minute/IP, configurable via `RATE_LIMIT`), exceeding it
 returns `429`.
 
 ### `GET /emissions/{id}`
@@ -124,7 +124,7 @@ curl http://localhost:8000/emissions/eaa89965-9647-46a7-9c64-c96b4486d174
 
 ### `GET /status`
 
-Same shape as import-service's `/status` (see above) — computed independently from
+Same shape as import-service's `/status` (see above), computed independently from
 query-service's own database connection, so it stays available even if import-service is down.
 
 ### `GET /health`
@@ -134,4 +134,4 @@ curl http://localhost:8000/health
 # {"status": "ok"}
 ```
 
-Liveness check, no database dependency, unrated-limited — meant for orchestration health checks.
+Liveness check, no database dependency, unrated-limited, meant for orchestration health checks.

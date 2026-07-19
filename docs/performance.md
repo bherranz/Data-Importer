@@ -1,6 +1,6 @@
 # Performance notes
 
-Numbers below are measured, not estimated — against the real `data/emissions.csv`
+Numbers below are measured, not estimated, against the real `data/emissions.csv`
 (4,848 source rows, pivoted into 398,970 `emission_records`) on a local Postgres 16 container.
 Reproduce with the commands shown; nothing here is exotic tooling.
 
@@ -19,9 +19,9 @@ since batches are processed sequentially, not in parallel.
 
 **Where the time goes, and what we didn't do:** batches are awaited one at a time
 (`services/import-service/src/imports/imports.service.ts`) rather than fired concurrently. That's
-a deliberate ceiling on connection pool usage, not an oversight — see
+a deliberate ceiling on connection pool usage, not an oversight, see
 [architecture.md](architecture.md#import-pipeline-design). Two straightforward levers if a much
-larger file needed to import faster: raise `IMPORT_BATCH_SIZE` (fewer, larger round trips — we
+larger file needed to import faster: raise `IMPORT_BATCH_SIZE` (fewer, larger round trips, we
 picked 1,000 as a conservative default, not a measured optimum), or switch the insert path from
 `createMany` to Postgres `COPY`, which is typically 3-5x faster than batched `INSERT` for
 bulk-loading but would mean bypassing Prisma for that one write path.
@@ -46,7 +46,7 @@ EXPLAIN ANALYZE SELECT * FROM emission_records
 --  Execution Time: 0.392 ms
 ```
 
-Sub-millisecond for both, on the full 398,970-row table, entirely from the composite index —
+Sub-millisecond for both, on the full 398,970-row table, entirely from the composite index,
 this is the "GET must be fast" requirement holding up in practice, not just in intent.
 
 ### The one query that doesn't scale for free: total counts
@@ -63,7 +63,7 @@ EXPLAIN ANALYZE SELECT COUNT(*) FROM emission_records WHERE country = 'ESP';
 ```
 
 A *filtered* count is cheap (index-only scan). An *unfiltered* count of the whole table costs
-~32ms at this size and grows roughly linearly with row count — a known Postgres characteristic
+~32ms at this size and grows roughly linearly with row count, a known Postgres characteristic
 (no maintained row-count metadata for MVCC reasons), not specific to this schema. At 400K rows
 this is a non-issue; at tens of millions it would be worth switching unfiltered counts to
 Postgres's planner estimate (`reltuples` in `pg_class`, or `EXPLAIN` row estimates) rather than

@@ -122,8 +122,4 @@ Optional goals:
 - Documentation beyond the quickstart (this README + 3 docs pages)
 - Extras not explicitly requested: SHA-256 checksum dedup for whole-file re-imports, explicit
   handling of duplicate/conflicting rows found in the real dataset (see
-  [docs/architecture.md](docs/architecture.md)), structured JSON logging in both services
-
-## License
-
-MIT
+  [docs/architecture.md](docs/architecture.md)), structured JSON logging in both services.
